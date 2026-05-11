@@ -3,9 +3,6 @@
  * @return {number}
  */
 var romanToInt = function(s) {
-    //add each value to a total
-    //loop through and determine if any applicable roms have a subtractor (V&X have I, L&C have C, and D&M have C)
-    // subtract the appropriate amount
     let total = 0
     for(let i = 0; i < s.length; i++){
         let val = s[i];
