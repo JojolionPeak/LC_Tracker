@@ -3,15 +3,22 @@
 #     def __init__(self, val=0, next=None):
 #         self.val = val
 #         self.next = next
+from pprint import pprint
+
 class Solution:
     def reverseList(self, head: Optional[ListNode]) -> Optional[ListNode]:
-        current = head
-        previous = None
+        ''' 
+        make a dummy node to point to the last node, dummy node to be tail
+        if the current head is None or cur.next is None, return current node
+        Take previous returned node and set it's pointer to the current node
+        Make the current node point to None
+        return current node
+        return the last node
+        '''
 
-        while current:
-            next_node = current.next
-            current.next = previous
-            previous = current
-            current = next_node
+        if head is None or head.next is None: return head
+        new_head = self.reverseList(head.next)
+        head.next.next = head
+        head.next = None
 
-        return previous
+        return new_head
