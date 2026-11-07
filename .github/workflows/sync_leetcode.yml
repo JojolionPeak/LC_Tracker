@@ -10,6 +10,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Check LeetCode session
+        env:
+          LEETCODE_CSRF_TOKEN: ${{ secrets.LEETCODE_CSRF_TOKEN }}
+          LEETCODE_SESSION: ${{ secrets.LEETCODE_SESSION }}
+        run: |
+          # Fail early with a clear message when the cookies are expired or wrong,
+          # instead of the sync action's "submissions is not iterable" TypeError.
+          if ! body=$(curl -sS --max-time 30 https://leetcode.com/graphql/ \
+            -H 'content-type: application/json' \
+            -H 'origin: https://leetcode.com' \
+            -H 'referer: https://leetcode.com' \
+            -H "cookie: csrftoken=${LEETCODE_CSRF_TOKEN}; LEETCODE_SESSION=${LEETCODE_SESSION};" \
+            -H "x-csrftoken: ${LEETCODE_CSRF_TOKEN}" \
+            --data '{"query":"query { userStatus { isSignedIn } }"}'); then
+            echo "::warning::Could not reach LeetCode to check the session; continuing."
+            exit 0
+          fi
+          signed_in=$(echo "$body" | jq -r 'if .data.userStatus.isSignedIn == null then "unknown" else (.data.userStatus.isSignedIn | tostring) end' 2>/dev/null || echo unknown)
+          if [ "$signed_in" = "false" ]; then
+            echo "::error::LeetCode says this session is not signed in. Refresh the LEETCODE_SESSION and LEETCODE_CSRF_TOKEN secrets (expired, empty, or pasted with a trailing ';')."
+            exit 1
+          elif [ "$signed_in" != "true" ]; then
+            echo "::warning::Could not read the sign-in status from LeetCode; continuing."
+          fi
+
       - name: Sync
         uses: joshcai/leetcode-sync@v1.7
         with:
